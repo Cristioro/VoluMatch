@@ -1,0 +1,39 @@
+PS D:\Proyectos\NormalizadorPortable> py -3.11 -m pip install pyinstaller 
+Collecting pyinstaller
+  Using cached pyinstaller-6.14.1-py3-none-win_amd64.whl.metadata (8.3 kB)
+Requirement already satisfied: setuptools>=42.0.0 in c:\users\cristian\appdata\local\programs\python\python311\lib\site-packages (from pyinstaller) (80.9.0)
+Requirement already satisfied: altgraph in c:\users\cristian\appdata\local\programs\python\python311\lib\site-packages (from pyinstaller) (0.17.4)
+Requirement already satisfied: pefile!=2024.8.26,>=2022.5.30 in c:\users\cristian\appdata\local\programs\python\python311\lib\site-packages (from pyinstaller) (2023.2.7)
+Requirement already satisfied: pywin32-ctypes>=0.2.1 in c:\users\cristian\appdata\local\programs\python\python311\lib\site-packages (from pyinstaller) (0.2.3)
+Requirement already satisfied: pyinstaller-hooks-contrib>=2025.4 in c:\users\cristian\appdata\local\programs\python\python311\lib\site-packages (from pyinstaller) (2025.5)
+Requirement already satisfied: packaging>=22.0 in c:\users\cristian\appdata\local\programs\python\python311\lib\site-packages (from pyinstaller) (25.0)
+Using cached pyinstaller-6.14.1-py3-none-win_amd64.whl (1.4 MB)
+Installing collected packages: pyinstaller
+  WARNING: The scripts pyi-archive_viewer.exe, pyi-bindepend.exe, pyi-grab_version.exe, pyi-makespec.exe, pyi-set_version.exe and pyinstaller.exe are installed in 'C:\Users\Cristian\AppData\Local\Programs\Python\Python311\Scripts' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+Successfully installed pyinstaller-6.14.1
+
+[notice] A new release of pip is available: 24.0 -> 25.1.1
+[notice] To update, run: C:\Users\Cristian\AppData\Local\Programs\Python\Python311\python.exe -m pip install --upgrade pip
+PS D:\Proyectos\NormalizadorPortable> py -3.11 pyinstaller --version     
+C:\Users\Cristian\AppData\Local\Programs\Python\Python311\python.exe: can't open file 'D:\\Proyectos\\NormalizadorPortable\\pyinstaller': [Errno 2] No such file or directory
+PS D:\Proyectos\NormalizadorPortable> py -3.11 -m pyinstaller --version
+>>
+C:\Users\Cristian\AppData\Local\Programs\Python\Python311\python.exe: No module named pyinstaller
+PS D:\Proyectos\NormalizadorPortable> C:\Users\Cristian\AppData\Local\Programs\Python\Python311\python.exe -m pyinstaller --version
+>>
+C:\Users\Cristian\AppData\Local\Programs\Python\Python311\python.exe: No module named pyinstaller
+PS D:\Proyectos\NormalizadorPortable> py -3.11 -m pip show pyinstaller
+Name: pyinstaller
+Version: 6.14.1
+Summary: PyInstaller bundles a Python application and all its dependencies into a single package.
+Home-page: https://www.pyinstaller.org/
+Author: Hartmut Goebel, Giovanni Bajo, David Vierra, David Cortesi, Martin Zibricky
+Author-email:
+License: GPLv2-or-later with a special exception which allows to use PyInstaller to build and distribute non-free programs (including commercial ones)
+Location: C:\Users\Cristian\AppData\Local\Programs\Python\Python311\Lib\site-packages
+Requires: altgraph, packaging, pefile, pyinstaller-hooks-contrib, pywin32-ctypes, setuptools
+Required-by:
+PS D:\Proyectos\NormalizadorPortable> pyinstaller --version
+pyinstaller: The term 'pyinstaller' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.

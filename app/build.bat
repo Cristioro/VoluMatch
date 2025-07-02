@@ -1,37 +1,36 @@
 @echo off
-setlocal
+cd /d %~dp0
 
-title 🔧 Compilando VoluMatch...
+echo ============================
+echo 🔧 Compilando VoluMatch...
+echo ============================
 
-REM --- CONFIGURACIÓN ---
-set PYTHON_ALIAS=py -3.11
-set SCRIPT=VolumeNormalizerApp.py
-set NAME=VoluMatch
-set ICON=volumatch.ico
-set FFMPEG=ffmpeg.exe
-
-REM --- BORRAR COMPILACIONES ANTERIORES ---
-echo 🧹 Limpiando compilaciones anteriores...
-rmdir /s /q build 2>nul
-rmdir /s /q dist 2>nul
-del /q "%NAME%.spec" 2>nul
-
-REM --- COMPILAR EL .EXE CON PYINSTALLER ---
-echo 🚀 Compilando %NAME%.exe con PyInstaller...
-%PYTHON_ALIAS% -m PyInstaller ^
-  --onefile ^
-  --noconsole ^
-  --name "%NAME%" ^
-  --icon "%ICON%" ^
-  --add-binary "%FFMPEG%;." ^
-  "%SCRIPT%"
-
-REM --- RESULTADO ---
-if exist dist\%NAME%.exe (
-    echo ✅ Compilación exitosa: dist\%NAME%.exe
-) else (
-    echo ❌ Ocurrió un error durante la compilación.
+REM Verificar si PyInstaller está disponible
+C:\Users\Cristian\AppData\Local\Programs\Python\Python311\Scripts\pyinstaller.exe --version >nul 2>&1
+if errorlevel 1 (
+    echo ❌ PyInstaller no está instalado para py -3.11
+    echo    Ejecutá: pip install pyinstaller
+    pause
+    exit /b
 )
 
+REM Limpiar compilaciones anteriores
+if exist build rmdir /s /q build
+if exist dist rmdir /s /q dist
+
+REM Compilar con PyInstaller
+C:\Users\Cristian\AppData\Local\Programs\Python\Python311\Scripts\pyinstaller.exe ^
+    --noconfirm ^
+    --onefile ^
+    --windowed ^
+    --name "VoluMatch" ^
+    --icon "..\assets\VoluMatch.ico" ^
+    --add-data "ffmpeg.exe;." ^
+    --add-data "..\assets\VoluMatch.png;assets" ^
+    VolumeNormalizerApp.py
+
+echo ============================
+echo ✅ VoluMatch compilado correctamente
+echo ➜  EXE creado: dist\VoluMatch.exe
+echo ============================
 pause
-endlocal
