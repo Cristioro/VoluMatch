@@ -1,0 +1,33 @@
+# ⛔ PyInstaller output folders
+/dist/
+/build/
+__pycache__/
+*.spec
+
+# ⛔ Ejecutables y binarios
+*.exe
+*.dll
+*.so
+*.pyc
+*.pyo
+*.log
+
+!ffmpeg.exe
+
+# ⛔ Entornos virtuales
+env/
+venv/
+.venv/
+
+# ⛔ Archivos de usuario / sistema
+.DS_Store
+Thumbs.db
+
+# ⛔ Archivos temporales de editores
+*.swp
+*.bak
+*.tmp
+*.sublime-workspace
+*.vscode/
+.idea/
+/test/
