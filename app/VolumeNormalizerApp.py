@@ -6,10 +6,23 @@ from mutagen.id3 import ID3, ID3NoHeaderError
 from PIL import Image, ImageTk
 import os
 import numpy as np
-import subprocess
 import tempfile
 import shutil
 import sys
+import subprocess
+
+# Parche universal para ocultar la terminal en Windows
+if sys.platform == "win32":
+    original_popen = subprocess.Popen
+
+    class PopenNoConsole(subprocess.Popen):
+        def __init__(self, *args, **kwargs):
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+            super().__init__(*args, **kwargs)
+
+    subprocess.Popen = PopenNoConsole
+
+
 
 # ---------------------- UTILIDAD DE RUTA PORTABLE ----------------------
 
@@ -25,6 +38,58 @@ def resource_path(relative_path):
 def get_rms(audio):
     samples = np.array(audio.get_array_of_samples())
     return np.sqrt(np.mean(samples.astype(np.float64) ** 2))
+
+def analyze_lufs(path):
+    try:
+        cmd = [
+            "ffmpeg", "-hide_banner", "-nostats", "-i", path,
+            "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
+            "-f", "null", "-"
+        ]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        output = result.stderr
+
+        # Buscar el bloque JSON que contiene los resultados
+        start = output.find("{")
+        end = output.rfind("}")
+        if start != -1 and end != -1:
+            import json
+            data = json.loads(output[start:end+1])
+            return round(float(data.get("input_i", -99)), 2)
+        return None
+    except Exception as e:
+        print(f"Error analizando LUFS: {e}")
+        return None
+    
+def analyze_lufs_rms(path):
+    try:
+        # Obtener LUFS usando ffmpeg (como ya hacías)
+        cmd = [
+            "ffmpeg", "-hide_banner", "-nostats", "-i", path,
+            "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
+            "-f", "null", "-"
+        ]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        output = result.stderr
+
+        # Extraer JSON
+        start = output.find("{")
+        end = output.rfind("}")
+        lufs = None
+        if start != -1 and end != -1:
+            import json
+            data = json.loads(output[start:end+1])
+            lufs = round(float(data.get("input_i", -99)), 2)
+
+        # Obtener RMS con pydub
+        audio = AudioSegment.from_mp3(path)
+        rms = round(get_rms(audio), 4)
+
+        return lufs, rms
+    except Exception as e:
+        print(f"Error analizando LUFS y RMS: {e}")
+        return None, None
+
 
 def apply_metadata(src_path, dst_path):
     try:
@@ -52,7 +117,8 @@ def normalize_with_ffmpeg_loudnorm(input_path, output_path, target_lufs=-16.0):
             "-b:a", "192k",
             tmp_out
         ]
-        subprocess.run(norm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        startup_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        subprocess.run(norm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, creationflags=startup_flags)
         shutil.move(tmp_out, output_path)
         return True
     except Exception as e:
@@ -65,8 +131,15 @@ class VolumeNormalizerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("VoluMatch — Normalizador LUFS")
-        icon_path = resource_path("assets/VoluMatch.ico")
-        self.root.iconbitmap(icon_path)
+        
+        # ✅ Usar PNG como ícono
+        try:
+            icon_path = resource_path("/assets/VoluMatch.png")
+            icon_img = ImageTk.PhotoImage(Image.open(icon_path))
+            self.root.iconphoto(True, icon_img)
+        except Exception as e:
+            print(f"No se pudo cargar el ícono: {e}")
+
         self.target_paths = []
         self.output_folder = None
 
@@ -120,7 +193,7 @@ class VolumeNormalizerApp:
         try:
             logo_path = resource_path("assets/VoluMatch.png")
             img = Image.open(logo_path)
-            img = img.resize((200, 200), Image.Resampling.LANCZOS)  # reemplaza ANTIALIAS
+            img = img.resize((200, 200), Image.Resampling.LANCZOS)
             logo_img = ImageTk.PhotoImage(img)
             label_logo = tk.Label(logo_frame, image=logo_img, bg="white")
             label_logo.image = logo_img
@@ -131,13 +204,15 @@ class VolumeNormalizerApp:
     def open_excel_window(self):
         self.excel_win = tk.Toplevel(self.root)
         self.excel_win.title("Canciones a normalizar")
-        self.excel_win.grab_set()  # Bloquea la ventana principal (pero permite abrir diálogos normales)
+        self.excel_win.grab_set()
 
         self.tree = ttk.Treeview(
-            self.excel_win, columns=("Archivo", "Duración", "RMS"),
+            self.excel_win, columns=("Archivo", "Duración", "RMS", "LUFS"),
             show="headings", selectmode="extended"
         )
-        for col in ("Archivo", "Duración", "RMS"):
+        for col in ("Archivo", "Duración", "RMS", "LUFS"):
+
+
             self.tree.heading(col, text=col)
             self.tree.column(col, width=250 if col == "Archivo" else 100)
         self.tree.pack(expand=True, fill="both")
@@ -153,7 +228,6 @@ class VolumeNormalizerApp:
 
         self.populate_treeview()
 
-
     def populate_treeview(self):
         if not hasattr(self, "tree"):
             return
@@ -164,9 +238,16 @@ class VolumeNormalizerApp:
                 audio = AudioSegment.from_mp3(path)
                 duration = round(len(audio) / 1000, 1)
                 rms = round(get_rms(audio), 2)
-                self.tree.insert("", "end", values=(path, f"{duration}s", rms))
+                lufs = analyze_lufs(path)
+                self.tree.insert("", "end", values=(path, f"{duration}s", rms, f"{lufs} LUFS" if lufs else "N/A"))
+                self.log(f"🎵 {os.path.basename(path)}")
+                self.log(f"   ⏱ Duración: {duration}s")
+                self.log(f"   🔊 RMS: {rms}")
+                self.log(f"   📉 LUFS real: {lufs if lufs is not None else 'Error'}")
+
             except Exception as e:
                 self.log(f"Error cargando {path}: {e}")
+
 
     def show_context_menu(self, event):
         selection = self.tree.selection()
@@ -197,12 +278,13 @@ class VolumeNormalizerApp:
         self.target_paths.clear()
 
     def remove_from_treeview(self, filepath):
+        if not hasattr(self, "tree"):
+            return
         for item in self.tree.get_children():
             values = self.tree.item(item)['values']
             if values and values[0] == filepath:
                 self.tree.delete(item)
                 break
-
 
     def select_output_folder(self):
         folder = filedialog.askdirectory()
@@ -251,7 +333,6 @@ class VolumeNormalizerApp:
         ok = 0
         errores = 0
 
-        # Copia para iterar sin problemas al modificar self.target_paths
         for idx, path in enumerate(self.target_paths.copy(), 1):
             try:
                 filename = os.path.basename(path)
@@ -264,17 +345,30 @@ class VolumeNormalizerApp:
                     self.log("  ✗ LUFS inválido, usando −16 por defecto.")
                     target_lufs = -16.0
 
+                # ➤ LUFS y RMS antes
+                original_lufs = analyze_lufs(path)
+                audio = AudioSegment.from_mp3(path)
+                original_rms = round(get_rms(audio), 2)
+
                 self.log("  Normalizando con loudnorm (LUFS)...")
+                self.log(f"  LUFS antes: {original_lufs} | RMS antes: {original_rms}")
                 success = normalize_with_ffmpeg_loudnorm(path, output_path, target_lufs)
                 if success:
+                    # ➤ LUFS y RMS después
+                    new_lufs = analyze_lufs(output_path)
+                    audio_new = AudioSegment.from_mp3(output_path)
+                    new_rms = round(get_rms(audio_new), 2)
+
+                    self.log(f"  LUFS después: {new_lufs} | RMS después: {new_rms}")
+
                     apply_metadata(path, output_path)
                     self.log(f"  ✓ Guardado: {output_path}")
                     ok += 1
 
                     # ➕ Eliminar del TreeView y lista
-                    self.remove_from_treeview(path)
+                    if hasattr(self, "tree") and self.tree.winfo_exists():
+                        self.remove_from_treeview(path)
                     self.target_paths.remove(path)
-
                 else:
                     raise Exception("ffmpeg falló")
 
@@ -289,6 +383,8 @@ class VolumeNormalizerApp:
         self.log(f"  Archivos exitosos: {ok}")
         self.log(f"  Con errores: {errores}")
         messagebox.showinfo("Finalizado", f"Normalización completada:\n✓ {ok} exitosos\n✗ {errores} errores")
+
+
 
 
 if __name__ == "__main__":
