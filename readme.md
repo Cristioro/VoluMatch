@@ -17,7 +17,7 @@
 
 ## 📸 Capturas de pantalla
 
-![VoluMatch UI](assets/logo.png) <!-- reemplaza por una captura real si tienes -->
+![VoluMatch UI](assets/VoluMatch.png) <!-- reemplaza por una captura real si tienes -->
 
 ---
 
