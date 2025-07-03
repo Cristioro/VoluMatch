@@ -27,6 +27,13 @@
 
 ## 🛠 Compilación del `.exe`
 
-Si quieres compilar tú mismo:
+### Si quieres compilar tú mismo:
+prerrequisitos: Python 3.11.9 y Pyinstaller
 
 * ejecuta el app/build.bat
+ó
+```bash
+py -3.11 -m pip install pyinstaller
+py -3.11 -m PyInstaller --onefile --noconsole --name "VoluMatch" --icon volumatch.ico --add-binary "ffmpeg.exe;." VolumeNormalizerApp.py
+```
+
