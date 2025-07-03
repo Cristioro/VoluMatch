@@ -1,6 +1,6 @@
 # ⛔ PyInstaller output folders
-/dist/
-/build/
+app/dist/
+app/build/VoluMatch
 __pycache__/
 *.spec
 
