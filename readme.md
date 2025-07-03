@@ -29,4 +29,4 @@
 
 Si quieres compilar tú mismo:
 
-*ejecuta el app/build.bat
+* ejecuta el app/build.bat
