@@ -15,12 +15,6 @@
 
 ---
 
-## 📸 Capturas de pantalla
-
-![VoluMatch UI](assets/VoluMatch.png) <!-- reemplaza por una captura real si tienes -->
-
----
-
 ## 🚀 Cómo usar
 
 1. Abre la app `VoluMatch.exe`
@@ -35,6 +29,4 @@
 
 Si quieres compilar tú mismo:
 
-```bash
-py -3.11 -m pip install pyinstaller
-py -3.11 -m PyInstaller --onefile --noconsole --name "VoluMatch" --icon volumatch.ico --add-binary "ffmpeg.exe;." VolumeNormalizerApp.py
+*ejecuta el app/build.bat
