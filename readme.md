@@ -30,10 +30,19 @@
 ### Si quieres compilar tú mismo:
 prerrequisitos: Python 3.11.9 y Pyinstaller
 
-* ejecuta el app/build.bat
-ó
+1. Clona este repositorio en tu máquina local:
 ```bash
-py -3.11 -m pip install pyinstaller
-py -3.11 -m PyInstaller --onefile --noconsole --name "VoluMatch" --icon volumatch.ico --add-binary "ffmpeg.exe;." VolumeNormalizerApp.py
+git clone https://github.com/Cristioro/VoluMatch
+cd VoluMatch
 ```
+2. Instala las dependencias requeridas:
+```bash
+pip install -r requirements.txt
+```
+3. ejecuta el `app/build.bat`
+    ó
+    ```bash
+    py -3.11 -m pip install pyinstaller
+    py -3.11 -m PyInstaller --onefile --noconsole --name "VoluMatch" --icon volumatch.ico --add-binary "ffmpeg.exe;." VolumeNormalizerApp.py
+    ```
 
