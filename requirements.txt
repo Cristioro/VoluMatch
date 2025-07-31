@@ -1,0 +1,4 @@
+mutagen==1.47.0
+numpy==2.3.2
+Pillow==11.3.0
+pydub==0.25.1
