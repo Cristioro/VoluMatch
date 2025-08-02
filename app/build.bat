@@ -27,6 +27,7 @@ C:\Users\Cristian\AppData\Local\Programs\Python\Python311\Scripts\pyinstaller.ex
     --icon "..\assets\VoluMatch.ico" ^
     --add-data "ffmpeg.exe;." ^
     --add-data "..\assets\VoluMatch.png;assets" ^
+    --add-data "lang.json;." ^
     VolumeNormalizerApp.py
 
 echo ============================

@@ -1,0 +1,74 @@
+{
+    "es": {
+        "title": "VoluMatch — Normalizador LUFS",
+        "manage_songs": "🎼 Gestionar canciones",
+        "output_folder": "📁 Carpeta de salida",
+        "selected_folder": "Carpeta seleccionada:",
+        "lufs_label": "LUFS objetivo:",
+        "normalize": "🎚️ Normalizar",
+        "console_title": "🖥 Consola",
+        "done": "🎉 Normalización finalizada.",
+        "success_files": "Archivos exitosos:",
+        "error_files": "Con errores:",
+        "error charging": "Error cargando",
+        "mp3": "Archivos MP3",
+        "excel_page": {
+            "title": "Canciones a Normalizar",
+            "archive": "archivo",
+            "duration": "duración",
+            "aggregate": "agregar canciones",
+            "delete selected": "eliminar seleccionados",
+            "delete all": "eliminar todos",
+            "accept": "Aceptar"
+        },
+        "messagebox_error": "Faltan datos",
+        "messagebox_error_text": "Por favor selecciona canciones y carpeta de salida.",
+        "finalized": "Finalizado",
+        "normalization_complete": "Normalización completada",
+        "invalid_lufs": "  ✗ LUFS inválido, usando −16 por defecto.",
+        "lufs_before": " LUFS antes",
+        "rms_before": " RMS antes",
+        "lufs_after": " LUFS después",
+        "rms_after": " RMS después",
+        "lufs_info": {
+            "title": "¿Qué es LUFS?",
+            "text": "🎚️ ¿Qué es LUFS?\nLUFS (Loudness Units Full Scale) mide el volumen que realmente percibimos.\nEntre más bajo el número (más negativo), más suave se escucha.\n\n📏 Ejemplos comunes:\n  🎬  −23 LUFS   Muy bajo (televisión europea)\n  🎙️  −18 LUFS   Moderado\n  🎧  −16 LUFS   Recomendado para música y podcast\n  🎵  −14 LUFS   Fuerte, ideal para Spotify o YouTube\n  🔊  −12 LUFS   Muy fuerte\n  🚨  −10 LUFS   Riesgo de distorsión\n\n💡 Recomendaciones:\n✔ Usa −16 LUFS para un sonido natural y balanceado.\n✔ Usa −14 LUFS si vas a subir a plataformas de streaming.\n✘ Evitá valores mayores a −10 LUFS, puede sonar saturado."
+        }
+    },
+    "en": {
+        "title": "VoluMatch — LUFS Normalizer",
+        "manage_songs": "🎼 Manage Songs",
+        "output_folder": "📁 Output Folder",
+        "selected_folder": "Selected folder:",
+        "lufs_label": "Target LUFS:",
+        "normalize": "🎚️ Normalize",
+        "console_title": "🖥 Console",
+        "done": "🎉 Normalization finished.",
+        "success_files": "Successful files:",
+        "error_files": "With errors:",
+        "error charging": "Error loading",
+        "mp3": "MP3 Files",
+        "excel_page": {
+            "title": "Songs to Normalize",
+            "archive": "file",
+            "duration": "duration",
+            "aggregate": "add songs",
+            "delete selected": "delete selected",
+            "delete all": "delete all",
+            "accept": "Accept"
+        },
+        "messagebox_error": "Missing data",
+        "messagebox_error_text": "Please select songs and an output folder.",
+        "finalized": "Finalized",
+        "normalization_complete": "Normalization complete",
+        "invalid_lufs": "  ✗ Invalid LUFS, using −16 by default.",
+        "lufs_before": " LUFS before",
+        "rms_before": " RMS before",
+        "lufs_after": " LUFS after",
+        "rms_after": " RMS after",
+        "lufs_info": {
+            "title": "What is LUFS?",
+            "text": "🎚️ What is LUFS?\nLUFS (Loudness Units Full Scale) measures how loud we actually perceive audio.\nThe lower the number (more negative), the softer it sounds.\n\n📏 Common examples:\n  🎬  −23 LUFS   Very low (European TV)\n  🎙️  −18 LUFS   Moderate\n  🎧  −16 LUFS   Recommended for music and podcasts\n  🎵  −14 LUFS   Loud, good for Spotify or YouTube\n  🔊  −12 LUFS   Very loud\n  🚨  −10 LUFS   Risk of distortion\n\n💡 Recommendations:\n✔ Use −16 LUFS for natural, balanced sound.\n✔ Use −14 LUFS for streaming platforms.\n✘ Avoid values above −10 LUFS — may sound distorted."
+        }
+    }
+}

@@ -10,6 +10,16 @@ import tempfile
 import shutil
 import sys
 import subprocess
+import json
+# ---------------------- CARGA DE IDIOMA ----------------------
+def load_language(lang_code="es"):
+    try:
+        with open(resource_path("lang.json"), "r", encoding="utf-8") as f:
+            langs = json.load(f)
+            return langs.get(lang_code, langs["es"])
+    except Exception as e:
+        print(f"⚠ Error cargando idioma: {e}")
+        return {}
 
 # Parche universal para ocultar la terminal en Windows
 if sys.platform == "win32":
@@ -30,7 +40,7 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS  # PyInstaller
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.abspath(os.path.dirname(__file__))
     return os.path.join(base_path, relative_path)
 
 # ---------------------- FUNCIONES DE AUDIO ----------------------
@@ -53,17 +63,16 @@ def analyze_lufs(path):
         start = output.find("{")
         end = output.rfind("}")
         if start != -1 and end != -1:
-            import json
             data = json.loads(output[start:end+1])
             return round(float(data.get("input_i", -99)), 2)
         return None
     except Exception as e:
-        print(f"Error analizando LUFS: {e}")
+        print(f"Error analyzing LUFS: {e}")
         return None
     
 def analyze_lufs_rms(path):
     try:
-        # Obtener LUFS usando ffmpeg (como ya hacías)
+        # Obtener LUFS usando ffmpeg
         cmd = [
             "ffmpeg", "-hide_banner", "-nostats", "-i", path,
             "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
@@ -77,7 +86,6 @@ def analyze_lufs_rms(path):
         end = output.rfind("}")
         lufs = None
         if start != -1 and end != -1:
-            import json
             data = json.loads(output[start:end+1])
             lufs = round(float(data.get("input_i", -99)), 2)
 
@@ -87,7 +95,7 @@ def analyze_lufs_rms(path):
 
         return lufs, rms
     except Exception as e:
-        print(f"Error analizando LUFS y RMS: {e}")
+        print(f"Error analyzing LUFS and RMS: {e}")
         return None, None
 
 
@@ -103,7 +111,7 @@ def apply_metadata(src_path, dst_path):
             dst_tags.add(frame)
         dst_tags.save(dst_path)
     except Exception as e:
-        print(f"Error copiando metadatos: {e}")
+        print(f"Error copying metadata: {e}")
 
 def normalize_with_ffmpeg_loudnorm(input_path, output_path, target_lufs=-16.0):
     try:
@@ -122,7 +130,7 @@ def normalize_with_ffmpeg_loudnorm(input_path, output_path, target_lufs=-16.0):
         shutil.move(tmp_out, output_path)
         return True
     except Exception as e:
-        print(f"Error en loudnorm: {e}")
+        print(f"Error in loudnorm: {e}")
         return False
 
 # ---------------------- APP PRINCIPAL ----------------------
@@ -130,11 +138,16 @@ def normalize_with_ffmpeg_loudnorm(input_path, output_path, target_lufs=-16.0):
 class VolumeNormalizerApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("VoluMatch — Normalizador LUFS")
+        self.lang_code = "en"  # o "es"
+        self.current_lang = self.lang_code
+        self.lang = load_language(self.lang_code)
+        self.root.title(self.lang["title"])
+
+        
         
         # ✅ Usar PNG como ícono
         try:
-            icon_path = resource_path("/assets/VoluMatch.png")
+            icon_path = resource_path("../assets/VoluMatch.png")
             icon_img = ImageTk.PhotoImage(Image.open(icon_path))
             self.root.iconphoto(True, icon_img)
         except Exception as e:
@@ -148,29 +161,32 @@ class VolumeNormalizerApp:
         style.configure("TButton", font=("Segoe UI", 10), padding=5)
         style.configure("TLabel", font=("Segoe UI", 10))
 
+        # Botón de cambio de idioma
+        ttk.Button(root, text="🌐 Change Language", command=self.toggle_language).pack(pady=(0, 10))
+
         # Botones de gestión
         action_frame = ttk.Frame(root)
         action_frame.pack(pady=5)
-        ttk.Button(action_frame, text="🎼 Gestionar canciones", command=self.open_excel_window).pack(side="left", padx=10)
-        ttk.Button(action_frame, text="📁 Carpeta de salida", command=self.select_output_folder).pack(side="left", padx=10)
+        ttk.Button(action_frame, text=self.lang["manage_songs"], command=self.open_excel_window).pack(side="left", padx=10)
+        ttk.Button(action_frame, text=self.lang["output_folder"], command=self.select_output_folder).pack(side="left", padx=10)
 
         # LUFS y botón de normalizar
         top_frame = ttk.Frame(root)
         top_frame.pack(pady=10)
 
-        ttk.Label(top_frame, text="LUFS objetivo:").pack(side="left", padx=(0, 5))
+        ttk.Label(top_frame, text=self.lang["lufs_label"]).pack(side="left", padx=(0, 5))
         self.lufs_entry = ttk.Entry(top_frame, width=6)
         self.lufs_entry.insert(0, "-16")
         self.lufs_entry.pack(side="left", padx=(0, 5))
         ttk.Button(top_frame, text="ℹ️", width=3, command=self.show_lufs_info).pack(side="left", padx=(0, 15))
-        ttk.Button(top_frame, text="🎚️ Normalizar", command=self.normalize).pack(side="left")
+        ttk.Button(top_frame, text=self.lang["normalize"], command=self.normalize).pack(side="left")
 
         # Barra de progreso
         self.progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
         self.progress.pack(pady=(5, 10))
 
         # Consola
-        console_frame = ttk.LabelFrame(root, text="🖥 Consola")
+        console_frame = ttk.LabelFrame(root, text=self.lang["console_title"], padding=(10, 5))
         console_frame.pack(padx=10, pady=10, fill="both", expand=True)
         self.console = scrolledtext.ScrolledText(console_frame, height=12, width=90, state='disabled', bg="#111", fg="#0f0")
         self.console.configure(font=("Consolas", 10))
@@ -201,30 +217,77 @@ class VolumeNormalizerApp:
         except Exception as e:
             self.log(f"⚠ No se pudo cargar el logo: {e}")
 
+    def toggle_language(self):
+        self.current_lang = "es" if self.lang_code == "en" else "en"
+        self.lang_code = self.current_lang
+        self.lang = load_language(self.lang_code)
+        self.refresh_texts()
+
+    def refresh_texts(self):
+        self.root.title(self.lang["title"])
+
+        # Destruir ventana secundaria antes de modificar widgets ligados a ella
+        if hasattr(self, "excel_win") and self.excel_win.winfo_exists():
+            self.excel_win.destroy()
+            # Al destruirla, también se destruye self.tree
+            del self.tree
+
+        # Actualizar texto de botones
+        for widget in self.root.winfo_children():
+            self.update_widget_texts(widget)
+
+        # Ya no intentes acceder a self.tree directamente aquí
+        # (la nueva ventana lo hará al abrirse nuevamente)
+
+
+    def update_widget_texts(self, parent):
+        for widget in parent.winfo_children():
+            if isinstance(widget, ttk.Button):
+                text_map = {
+                    "🎼": self.lang["manage_songs"],
+                    "📁": self.lang["output_folder"],
+                    "🎚️": self.lang["normalize"],
+                    "🌐": "🌐 Cambiar idioma",
+                    "Aceptar": self.lang["excel_page"]["accept"]
+                }
+                for prefix, new_text in text_map.items():
+                    if widget["text"].startswith(prefix):
+                        widget.config(text=new_text)
+            elif isinstance(widget, ttk.LabelFrame):
+                if widget["text"].startswith("🖥"):
+                    widget.config(text=self.lang["console_title"])
+            elif isinstance(widget, ttk.Label):
+                if self.lang["lufs_label"].split(":")[0] in widget["text"]:
+                    widget.config(text=self.lang["lufs_label"])
+            self.update_widget_texts(widget)
+
+
+
+
     def open_excel_window(self):
         self.excel_win = tk.Toplevel(self.root)
-        self.excel_win.title("Canciones a normalizar")
+        self.excel_win.title(self.lang["excel_page"]["title"])
         self.excel_win.grab_set()
 
         self.tree = ttk.Treeview(
-            self.excel_win, columns=("Archivo", "Duración", "RMS", "LUFS"),
+            self.excel_win, columns=(self.lang["excel_page"]["archive"], self.lang["excel_page"]["duration"], "RMS", "LUFS"),
             show="headings", selectmode="extended"
         )
-        for col in ("Archivo", "Duración", "RMS", "LUFS"):
+        for col in (self.lang["excel_page"]["archive"], self.lang["excel_page"]["duration"], "RMS", "LUFS"):
 
 
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=250 if col == "Archivo" else 100)
+            self.tree.column(col, width=250 if col == self.lang["excel_page"]["archive"] else 100)
         self.tree.pack(expand=True, fill="both")
         self.tree.bind("<Button-3>", self.show_context_menu)
 
         btn_frame = tk.Frame(self.excel_win)
         btn_frame.pack(pady=5)
 
-        tk.Button(btn_frame, text="Agregar canciones", command=self.select_targets).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Eliminar seleccionadas", command=self.delete_selected).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Eliminar todo", command=self.clear_all).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Aceptar", command=self.excel_win.destroy).pack(side="left", padx=15)
+        tk.Button(btn_frame, text=self.lang["excel_page"]["aggregate"], command=self.select_targets).pack(side="left", padx=5)
+        tk.Button(btn_frame, text=self.lang["excel_page"]["delete selected"], command=self.delete_selected).pack(side="left", padx=5)
+        tk.Button(btn_frame, text=self.lang["excel_page"]["delete all"], command=self.clear_all).pack(side="left", padx=5)
+        tk.Button(btn_frame, text=self.lang["excel_page"]["accept"], command=self.excel_win.destroy).pack(side="left", padx=15)
 
         self.populate_treeview()
 
@@ -241,12 +304,12 @@ class VolumeNormalizerApp:
                 lufs = analyze_lufs(path)
                 self.tree.insert("", "end", values=(path, f"{duration}s", rms, f"{lufs} LUFS" if lufs else "N/A"))
                 self.log(f"🎵 {os.path.basename(path)}")
-                self.log(f"   ⏱ Duración: {duration}s")
+                self.log(f"   ⏱ {self.lang['excel_page']['duration']}: {duration}s")
                 self.log(f"   🔊 RMS: {rms}")
                 self.log(f"   📉 LUFS real: {lufs if lufs is not None else 'Error'}")
 
             except Exception as e:
-                self.log(f"Error cargando {path}: {e}")
+                self.log(f"{self.lang['error charging']} {path}: {e}")
 
 
     def show_context_menu(self, event):
@@ -258,7 +321,7 @@ class VolumeNormalizerApp:
         menu.post(event.x_root, event.y_root)
 
     def select_targets(self):
-        files = filedialog.askopenfilenames(filetypes=[("Archivos MP3", "*.mp3")])
+        files = filedialog.askopenfilenames(filetypes=[(self.lang["mp3"], "*.mp3")])
         for f in files:
             if f not in self.target_paths:
                 self.target_paths.append(f)
@@ -290,41 +353,27 @@ class VolumeNormalizerApp:
         folder = filedialog.askdirectory()
         if folder:
             self.output_folder = folder
-            self.log(f"[Salida] Carpeta: {folder}")
-            messagebox.showinfo("Carpeta de salida", f"Carpeta seleccionada:\n{folder}")
+            self.log(f"{self.lang['output_folder']}: {folder}")
+            messagebox.showinfo(self.lang["output_folder"], f"{self.lang['selected_folder']}:\n{folder}")
 
     def show_lufs_info(self):
         popup = tk.Toplevel(self.root)
-        popup.title("Valores LUFS sugeridos")
+        popup.title(self.lang["lufs_info"]["title"])
         popup.geometry("520x360")
         popup.resizable(False, False)
 
-        texto = (
-            "🎚️ ¿Qué es LUFS?\n"
-            "LUFS (Loudness Units Full Scale) mide el volumen que realmente percibimos.\n"
-            "Entre más bajo el número (más negativo), más suave se escucha.\n\n"
-            "📏 Ejemplos comunes:\n"
-            "  🎬  −23 LUFS   Muy bajo (televisión europea)\n"
-            "  🎙️  −18 LUFS   Moderado\n"
-            "  🎧  −16 LUFS   Recomendado para música y podcast\n"
-            "  🎵  −14 LUFS   Fuerte, ideal para Spotify o YouTube\n"
-            "  🔊  −12 LUFS   Muy fuerte\n"
-            "  🚨  −10 LUFS   Riesgo de distorsión\n\n"
-            "💡 Recomendaciones:\n"
-            "✔ Usa −16 LUFS para un sonido natural y balanceado.\n"
-            "✔ Usa −14 LUFS si vas a subir a plataformas de streaming.\n"
-            "✘ Evitá valores mayores a −10 LUFS, puede sonar saturado."
-        )
+        texto = self.lang["lufs_info"]["text"]
 
         text_widget = scrolledtext.ScrolledText(popup, wrap=tk.WORD, font=("Segoe UI", 11))
         text_widget.insert(tk.END, texto.strip())
         text_widget.config(state="disabled")
         text_widget.pack(expand=True, fill="both", padx=10, pady=10)
-        tk.Button(popup, text="Cerrar", command=popup.destroy).pack(pady=10)
+        tk.Button(popup, text="OK", command=popup.destroy).pack(pady=10)
+
 
     def normalize(self):
         if not self.target_paths or not self.output_folder:
-            messagebox.showerror("Faltan datos", "Por favor selecciona canciones y carpeta de salida.")
+            messagebox.showerror(self.lang["messagebox_error"], self.lang["messagebox_error_text"])
             return
 
         total = len(self.target_paths)
@@ -342,7 +391,7 @@ class VolumeNormalizerApp:
                 try:
                     target_lufs = float(self.lufs_entry.get())
                 except ValueError:
-                    self.log("  ✗ LUFS inválido, usando −16 por defecto.")
+                    self.log(self.lang["invalid_lufs"])
                     target_lufs = -16.0
 
                 # ➤ LUFS y RMS antes
@@ -351,7 +400,7 @@ class VolumeNormalizerApp:
                 original_rms = round(get_rms(audio), 2)
 
                 self.log("  Normalizando con loudnorm (LUFS)...")
-                self.log(f"  LUFS antes: {original_lufs} | RMS antes: {original_rms}")
+                self.log(f"  {self.lang['lufs_before']}: {original_lufs} | {self.lang['rms_before']}: {original_rms}")
                 success = normalize_with_ffmpeg_loudnorm(path, output_path, target_lufs)
                 if success:
                     # ➤ LUFS y RMS después
@@ -359,7 +408,7 @@ class VolumeNormalizerApp:
                     audio_new = AudioSegment.from_mp3(output_path)
                     new_rms = round(get_rms(audio_new), 2)
 
-                    self.log(f"  LUFS después: {new_lufs} | RMS después: {new_rms}")
+                    self.log(f"  {self.lang['lufs_after']}: {new_lufs} | {self.lang['rms_after']}: {new_rms}")
 
                     apply_metadata(path, output_path)
                     self.log(f"  ✓ Guardado: {output_path}")
@@ -370,7 +419,7 @@ class VolumeNormalizerApp:
                         self.remove_from_treeview(path)
                     self.target_paths.remove(path)
                 else:
-                    raise Exception("ffmpeg falló")
+                    raise Exception("ffmpeg failed")
 
             except Exception as e:
                 self.log(f"  ✗ Error en {path}: {e}")
@@ -379,10 +428,10 @@ class VolumeNormalizerApp:
             self.progress["value"] = idx
             self.progress.update_idletasks()
 
-        self.log("\n🎉 Normalización finalizada.")
-        self.log(f"  Archivos exitosos: {ok}")
-        self.log(f"  Con errores: {errores}")
-        messagebox.showinfo("Finalizado", f"Normalización completada:\n✓ {ok} exitosos\n✗ {errores} errores")
+        self.log(f"\n\n{self.lang['normalization_complete']}")
+        self.log(f"  {self.lang['success_files']}: {ok}")
+        self.log(f"  {self.lang['error_files']}: {errores}")
+        messagebox.showinfo(self.lang['finalized'], f"{self.lang['normalization_complete']}:\n✓ {ok} exitosos\n✗ {errores} errores")
 
 
 
@@ -391,3 +440,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = VolumeNormalizerApp(root)
     root.mainloop()
+
